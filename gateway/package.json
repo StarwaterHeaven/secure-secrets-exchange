@@ -1,0 +1,4 @@
+{ "name": "secure-secrets-exchange-gateway", "version": "1.0.0", "private": true, "type": "module",
+  "description": "Qatom per-call tools in front of an open-source secrets core",
+  "main": "server.mjs", "scripts": { "start": "node server.mjs", "test": "node test.mjs" },
+  "dependencies": { "redis": "^4.7.0" }, "license": "MIT" }

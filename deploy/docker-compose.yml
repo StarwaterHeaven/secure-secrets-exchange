@@ -1,0 +1,45 @@
+# Secure Secrets Exchange: open-source secrets core (MIT, (c) 2012-ongoing delano, contributors)
+# + Valkey + the Qatom gateway. Everything listens on 127.0.0.1 only; the public reaches it
+# through the Cloudflare Tunnel (cloudflared on the host).
+name: secure-secrets-exchange
+services:
+  app:
+    image: onetimesecret/onetimesecret:v0.26.14
+    env_file: [ core.env ]
+    environment:
+      - RACK_ENV=production
+      - VALKEY_URL=redis://:${VALKEY_PASSWORD:?set in .env}@maindb:6379/0
+      - AUTHENTICATION_MODE=simple
+      - SESSION_COOKIE_SECURE=true
+    entrypoint: ['./bin/entrypoint.sh']
+    depends_on:
+      maindb: { condition: service_healthy }
+    ports: [ '127.0.0.1:3000:3000' ]
+    restart: unless-stopped
+    healthcheck: { test: ['CMD', 'bin/healthcheck.sh'], interval: 15s, timeout: 10s, retries: 5, start_period: 60s }
+    logging: { driver: json-file, options: { max-size: '20m', max-file: '3' } }
+  maindb:
+    image: valkey/valkey:8.1-bookworm
+    environment: [ 'REDISCLI_AUTH=${VALKEY_PASSWORD:?set in .env}' ]
+    command: >
+      valkey-server --appendonly yes --appendfilename onetime.aof --appendfsync everysec
+      --dbfilename onetime.rdb --save 157680000 1 --bind 0.0.0.0 --port 6379
+      --requirepass ${VALKEY_PASSWORD:?set in .env} --databases 1 --timeout 30 --loglevel notice
+    volumes: [ 'maindb-data:/data' ]
+    expose: [ '6379' ]
+    restart: unless-stopped
+    healthcheck: { test: ['CMD', 'valkey-cli', 'ping'], interval: 10s, timeout: 5s, retries: 5 }
+    logging: { driver: json-file, options: { max-size: '20m', max-file: '3' } }
+  gateway:
+    build: ./gateway
+    env_file: [ gateway.env ]
+    environment:
+      - REDIS_URL=redis://:${VALKEY_PASSWORD:?set in .env}@maindb:6379/0
+      - CORE_URL=http://app:3000
+    depends_on:
+      maindb: { condition: service_healthy }
+    ports: [ '127.0.0.1:8080:8080' ]
+    restart: unless-stopped
+    logging: { driver: json-file, options: { max-size: '20m', max-file: '3' } }
+volumes:
+  maindb-data:
