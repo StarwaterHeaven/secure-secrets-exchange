@@ -1,0 +1,1 @@
+{ "name": "sse-mcp", "private": true, "type": "module", "scripts": { "test": "node test/run.mjs", "deploy": "wrangler deploy" }, "devDependencies": { "wrangler": "^4" } }

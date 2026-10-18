@@ -8,14 +8,17 @@ One-time secret links for AI agents and the people they work with, sold per call
 
 Recipients and senders need only a browser: no account, no payment.
 
-**End-to-end mode** is the upgrade over the open-source secrets core underneath. Agents that can run code encrypt the secret themselves and put the key after `#` in the link. The service, Qatom and Cloudflare see ciphertext only. See [E2E-SPEC.md](E2E-SPEC.md) and [SECURITY.md](SECURITY.md).
+**End-to-end mode** is the upgrade over the open-source secrets core underneath. Agents that can run code encrypt the secret themselves and put the key after `#` in the link. The service, Qatom and Cloudflare see ciphertext only. See [E2E-SPEC.md](E2E-SPEC.md) and [SECURITY.md](SECURITY.md). The reveal page has **Copy to clipboard** and **Clear from screen** buttons.
+
+**In-chat app (MCP App).** For people whose AI app shows MCP Apps (Claude, ChatGPT, Hermes and others), add `https://sse-mcp.agentkepler.tech/mcp` as a second connector (no sign-in). The human types the secret into a card inside the chat, not into the chat itself. The card encrypts it end-to-end and gives the AI only the ciphertext to buy the link with on Qatom. The AI never sees the secret or the key. A second card opens links. Payments still go through the Qatom master MCP. This connector is temporary: it goes away when Qatom serves MCP Apps itself. See [mcp-app/README.md](mcp-app/README.md).
 
 ## What is in here
 
 | Path | What |
 |---|---|
 | `gateway/server.mjs` | The Qatom gateway: paid tools, sender and viewer pages, end-to-end mode, security page, llms.txt |
-| `gateway/test.mjs` | 35 tests, run with `node gateway/test.mjs` (in-memory store; set `REDIS_URL` to run them against Valkey) |
+| `gateway/test.mjs` | 39 tests, run with `node gateway/test.mjs` (in-memory store; set `REDIS_URL` to run them against Valkey) |
+| `mcp-app/` | The in-chat app: a Cloudflare Worker serving two cards (send, open) over MCP. 14 tests: `node mcp-app/test/run.mjs` |
 | `deploy/` | docker compose (secrets core, Valkey, gateway) and the server setup, including the Cloudflare Tunnel allowlist |
 | `examples/` | sse-e2e-v1 in Python and Node |
 | `tools/verify.mjs` | Checks that the live pages run exactly the browser code in this repository |

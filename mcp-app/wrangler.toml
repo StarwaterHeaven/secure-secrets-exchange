@@ -1,0 +1,9 @@
+name = "sse-mcp"
+main = "src/index.mjs"
+compatibility_date = "2026-09-01"
+routes = [ { pattern = "sse-mcp.agentkepler.tech", custom_domain = true } ]
+
+# Short-lived map: card ref -> paid link base (never a key). Created by deploy.sh; the id is filled in there.
+[[kv_namespaces]]
+binding = "LINKS"
+id = "911e4c3927a94bffbaadbc2c29ce20b3"

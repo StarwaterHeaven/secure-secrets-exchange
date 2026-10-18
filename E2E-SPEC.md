@@ -30,6 +30,10 @@ The buyer's agent encrypts a secret before it reaches Secure Secrets Exchange. T
 
 Without a `#key`, both flows fall back to standard mode.
 
+## In-chat card (MCP App)
+
+The send card in `mcp-app/` produces exactly this format in the card (WebCrypto), so links from the card, from agents and from the web pages are interchangeable. The open card accepts only a complete `https://secrets.agentkepler.tech/v/<32>#<43>` link and calls `POST /api/e2e/reveal/<id>` (CORS open, no credentials).
+
 ## Browser code is pinned
 
 Each browser page runs a single inline script. Its SHA-256 is in the page's `Content-Security-Policy` header (`script-src 'sha256-...'`), so the browser runs no other script. `tools/verify.mjs` checks that the live hashes match this repository. The hashes are also listed at `/security` and in `/status`.

@@ -24,6 +24,7 @@ const CORE_VERSION = env.CORE_VERSION || 'v0.26.14';
 const SOURCE_URL = env.SOURCE_URL || 'https://github.com/StarwaterHeaven/secure-secrets-exchange';
 const CORE_SOURCE_URL = 'https://github.com/onetimesecret/onetimesecret';
 const SECURITY_CONTACT = env.SECURITY_CONTACT || 'mailto:support@todaq.net';
+const APP_URL = env.APP_URL || 'https://sse-mcp.agentkepler.tech/mcp';
 const E2E_PREFIX = 'sse-e2e-v1.';
 const E2E_MAX = 14000; // ciphertext of a 10000-character secret, base64url, plus prefix
 const isE2E = (s) => typeof s === 'string' && s.startsWith(E2E_PREFIX);
@@ -74,6 +75,14 @@ const VIEWER_JS = String.raw`(function () {
   function ub(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; var b = atob(s), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
   var key = location.hash.slice(1), id = location.pathname.split('/').pop();
   var st = document.getElementById('st'), go = document.getElementById('go'), out = document.getElementById('out');
+  var cp = document.getElementById('copy'), hide = document.getElementById('hide'), acts = document.getElementById('acts');
+  cp.onclick = async function () {
+    try { await navigator.clipboard.writeText(out.value); }
+    catch (e) { out.hidden = false; out.focus(); out.select(); try { document.execCommand('copy'); } catch (e2) {} }
+    cp.textContent = 'Copied'; st.textContent = 'Copied to your clipboard. Paste it where it belongs: this page cannot show it again.';
+    setTimeout(function () { cp.textContent = 'Copy again'; }, 2500);
+  };
+  hide.onclick = function () { out.value = ''; out.hidden = true; acts.hidden = true; st.textContent = 'Removed from this page. It no longer exists anywhere on the server either.'; };
   if (!/^[A-Za-z0-9_-]{43}$/.test(key)) { st.textContent = 'This link is missing its key (the part after #). Nothing was opened. Ask the sender for the complete link.'; go.disabled = true; return; }
   go.onclick = async function () {
     go.disabled = true; st.textContent = 'Opening...';
@@ -84,9 +93,9 @@ const VIEWER_JS = String.raw`(function () {
       var raw = ub(ct.slice(P.length));
       var k = await crypto.subtle.importKey('raw', ub(key), 'AES-GCM', false, ['decrypt']);
       var pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(0, 12) }, k, raw.slice(12));
-      out.value = new TextDecoder().decode(pt); out.hidden = false; go.hidden = true;
+      out.value = new TextDecoder().decode(pt); out.hidden = false; go.hidden = true; acts.hidden = false; cp.focus();
       history.replaceState(null, '', location.pathname);
-      st.textContent = 'Decrypted in your browser. The server only ever held the encrypted copy, and it has now been deleted. Copy the secret now.';
+      st.textContent = 'Decrypted in your browser. The server only ever held the encrypted copy, and it has now been deleted. Copy the secret now: this page cannot show it again.';
     } catch (e) { st.textContent = 'Could not decrypt. The link may be incomplete or altered. The encrypted copy was deleted when it was opened.'; }
   };
 })();`;
@@ -268,7 +277,7 @@ function page(title, inner) {
 <style>:root{--fg:#0f1d1c;--mut:#4b5b59;--line:#d7e0df;--acc:#0e6b62;--bg:#fff}@media(prefers-color-scheme:dark){:root{--fg:#e8efee;--mut:#9fb0ae;--line:#2b3a39;--acc:#4fbfb2;--bg:#0f1514}}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:560px;margin:0 auto;padding:40px 16px}
 h1{font-size:1.4rem;margin:0 0 8px}p{color:var(--mut)}label{display:block;font-weight:600;margin:16px 0 6px}textarea,input{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;background:transparent;color:inherit}
-textarea{min-height:140px;font-family:ui-monospace,Menlo,monospace}button{margin-top:18px;background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 18px;font:inherit;font-weight:600;cursor:pointer}.brand{font-size:.85rem;color:var(--mut);margin-bottom:24px}.ok{border:1px solid var(--line);border-radius:12px;padding:16px}.small{font-size:.85rem}a{color:var(--acc)}table{border-collapse:collapse;width:100%;font-size:.92rem}td,th{border-top:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}code{font-family:ui-monospace,Menlo,monospace;font-size:.85em;word-break:break-all}</style></head>
+textarea{min-height:140px;font-family:ui-monospace,Menlo,monospace}button{margin-top:18px;background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 18px;font:inherit;font-weight:600;cursor:pointer}button.sec{background:transparent;color:var(--acc);border:1px solid var(--line)}.brand{font-size:.85rem;color:var(--mut);margin-bottom:24px}.ok{border:1px solid var(--line);border-radius:12px;padding:16px}.small{font-size:.85rem}a{color:var(--acc)}table{border-collapse:collapse;width:100%;font-size:.92rem}td,th{border-top:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}code{font-family:ui-monospace,Menlo,monospace;font-size:.85em;word-break:break-all}</style></head>
 <body><main><div class="brand">${NAME}</div>${inner}</main></body></html>`;
 }
 async function senderPage(req, res, token) {
@@ -386,7 +395,7 @@ Collect a secret end-to-end:
 
 Node 20 or later (built-in WebCrypto): key = crypto.getRandomValues(new Uint8Array(32)); iv = crypto.getRandomValues(new Uint8Array(12)); ct = new Uint8Array(await crypto.subtle.encrypt({name: "AES-GCM", iv}, await crypto.subtle.importKey("raw", key, "AES-GCM", false, ["encrypt"]), new TextEncoder().encode(secret))); payload = "${E2E_PREFIX}" + Buffer.concat([iv, ct]).toString("base64url"); link fragment = Buffer.from(key).toString("base64url").
 
-If you cannot run code, use standard mode (send the secret as payload). It works the same way for the recipient, but the operator could read it while it is stored.
+If you cannot run code and the human's app shows MCP Apps, use the in-chat app below: still end-to-end. Otherwise use standard mode (send the secret as payload). It works the same way for the recipient, but the operator could read it while it is stored.
 
 ## Security
 
@@ -402,6 +411,14 @@ Every answer has ok, item, answer_type, as_of, inputs (secrets are never echoed)
 - end-to-end: bad_value (400) for a malformed ciphertext or a passphrase; the viewer's reveal call returns not_available (404) once opened, burned or expired
 - handle_required (400), not_found_or_expired and already_retrieved (200 with ok: false and result.status set, so agents see the reason), slow_down (429), internal_error (500/502)
 
+## In-chat app (MCP App)
+
+End-to-end without running code. If the human's AI app shows MCP Apps (Claude, ChatGPT, Hermes), add the second connector ${APP_URL} (free, no sign-in). Payments still go through the Qatom master MCP. The key and the secret never reach the model.
+- Send: call sse_send_secret (optional label, ttl_hours). The human types the secret into the card, not the chat. The card encrypts it (sse-e2e-v1) and messages you a ref and the ciphertext. Buy create with {"payload": <that ciphertext>, "ttl_hours": ...}, then call sse_link_ready with the ref and share_url_base, receipt_url and expires_at from the receipt. The card adds the key after # and shows the full link with a Copy button.
+- Open: call sse_open_secret. The human pastes the full link into the card; it fetches and decrypts in the card, with Copy and Clear buttons. Tell humans never to paste a link with # into the chat.
+- Status: sse_check_receipt with a receipt_url (free).
+- The card calls only this service (/api/e2e/reveal and /api/e2e/receipt, which allow cross-origin calls and take no credentials). The connector is temporary: it goes away when Qatom serves MCP Apps itself. Source: mcp-app/ in the gateway repository.
+
 ## For agents and for people
 
 - Agents call the tools. Send share_url and request_url to people; keep request_handle and receipt_url to yourself.
@@ -416,6 +433,7 @@ Refunds are given on request. Send the free feedback item a message quoting the 
 ## Resources
 
 - Status: ${PUBLIC_ORIGIN}/status
+- In-chat app (MCP App): ${APP_URL}
 - Feedback, refunds and questions: the free "Secure Secrets Exchange: feedback" item, or support@todaq.net
 - Built on an open-source secrets core (MIT License, (c) 2012-ongoing delano, contributors), with Qatom per-call tools added.
 `, 'text/plain; charset=utf-8');
@@ -452,6 +470,7 @@ async function createE2E(res, p, payload) {
 function viewerPage(res) {
   send(res, 200, page('Secret', `<h1>Someone sent you a secret</h1><p>It is end-to-end encrypted. Your browser will download the encrypted copy and decrypt it here with the key in this link. It can be opened once; after that it is gone.</p>
 <button id="go" type="button">Reveal the secret</button><p id="st" role="status"></p><textarea id="out" hidden readonly spellcheck="false" aria-label="Secret"></textarea>
+<div id="acts" hidden><button id="copy" type="button">Copy to clipboard</button> <button id="hide" type="button" class="sec">Clear from screen</button></div>
 <p class="small">How this works and what we can and cannot see: <a href="/security">security</a>.</p><script>${VIEWER_JS}</script>`), 'text/html; charset=utf-8',
   { 'content-security-policy': `default-src 'none'; script-src ${cspHash(VIEWER_JS)}; connect-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'` });
 }
@@ -514,6 +533,8 @@ Viewer script: <code>${i.viewer_script_sha256}</code><br>Sender script: <code>${
 <li>Read the code: gateway <a href="${i.gateway_source}">${esc(i.gateway_source.replace('https://', ''))}</a>. The secrets core is the open-source project at <a href="${i.core_source}">${esc(i.core_source.replace('https://', ''))}</a> (MIT), version <code>${esc(i.core_version)}</code>.</li>
 <li>Machine-readable: <a href="/status">/status</a>, <a href="/llms.txt">/llms.txt</a> (End-to-end mode and Security sections), <a href="/.well-known/security.txt">security.txt</a>.</li>
 </ul>
+<h2>In-chat app</h2>
+<p>Claude, ChatGPT and other clients that support MCP Apps can add <code>${esc(APP_URL)}</code> as a custom connector. It draws two cards inside the chat. <strong>Send</strong>: you type the secret into the card, the card encrypts it, and only ciphertext reaches the model, which buys the link on Qatom; the card then adds the key and shows the link with a Copy button. <strong>Open</strong>: you paste a link into the card (not into the chat), and the card reveals and decrypts it, also with a Copy button. In both, the key and the secret stay inside the card and never reach the model, its provider or this server. The app sells nothing and needs no sign-in; payments stay on Qatom. It is temporary: when Qatom shows MCP Apps itself, this second connection will no longer be needed.</p>
 <h2>Limits</h2>
 <ul>
 <li>Nobody outside can prove that the code running here is the published code. End-to-end mode is built so that this does not matter for the secret itself: the server never gets the key. A tampered page would show a different script hash.</li>
@@ -548,10 +569,21 @@ const server = http.createServer(async (req, res) => {
     let m;
     if ((m = path.match(/^\/in\/([A-Za-z0-9_-]{32})$/))) return await senderPage(req, res, m[1]);
     if ((m = path.match(/^\/v\/([A-Za-z0-9_-]{32})$/)) && req.method === 'GET') return viewerPage(res);
+    if (/^\/api\/e2e\/(reveal|receipt)\/[A-Za-z0-9_-]{32}$/.test(path)) {
+      // Open to any origin so the in-chat app (MCP App) can reveal and check receipts. Both are keyed by an
+      // unguessable id, carry no cookies, and the reveal still returns ciphertext only.
+      res.setHeader('access-control-allow-origin', '*');
+      if (req.method === 'OPTIONS') { res.writeHead(204, { 'access-control-allow-methods': 'GET, POST', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400' }); return res.end(); }
+    }
     if ((m = path.match(/^\/api\/e2e\/reveal\/([A-Za-z0-9_-]{32})$/)) && req.method === 'POST') return await e2eReveal(req, res, m[1]);
     if ((m = path.match(/^\/api\/e2e\/receipt\/([A-Za-z0-9_-]{32})$/)) && (req.method === 'GET' || req.method === 'POST')) return await e2eReceipt(req, res, url, m[1]);
     if (SERVICE_PATH && (m = path.match(/^\/paid\/([^/]+)\/(create|request)$/)) && (req.method === 'POST' || req.method === 'GET')) {
-      if (!same(m[1], SERVICE_PATH) || !paidOk(req)) return notFound(res);
+      if (!same(m[1], SERVICE_PATH) || !paidOk(req)) {
+        // Refused paid call: log why, never the values (hashes are 10-character prefixes).
+        const a = String(req.headers['authorization'] || '');
+        console.log(JSON.stringify({ at: nowIso(), refused: m[2], path_ok: same(m[1], SERVICE_PATH), auth_present: !!a, auth_bearer: a.startsWith('Bearer '), auth_len: a.length, want_len: FULFIL ? FULFIL.length + 7 : 0, auth_sha10: a ? sha(a).slice(0, 10) : null, want_sha10: FULFIL ? sha(`Bearer ${FULFIL}`).slice(0, 10) : null, method: req.method, tx: req.headers['x-qatom-transaction-id'] || null, ua: String(req.headers['user-agent'] || '').slice(0, 60) }));
+        return notFound(res);
+      }
       const tx = req.headers['x-qatom-transaction-id'];
       console.log(JSON.stringify({ at: nowIso(), tool: m[2], tx: tx || null }));
       return m[2] === 'create' ? await toolCreate(req, res, url) : await toolRequest(req, res, url);

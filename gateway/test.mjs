@@ -65,6 +65,9 @@ try {
   const m1 = html.match(/<script>([\s\S]*)<\/script>/); const h1 = "'sha256-" + (await import('node:crypto')).createHash('sha256').update(m1[1], 'utf8').digest('base64') + "'";
   assert.ok(csp.includes(h1) && !html.includes(ctext)); ok('viewer page: CSP pins the inline script hash; no ciphertext in HTML');
   r = await fetch(receipt); assert.equal((await r.json()).result.status, 'waiting'); ok('e2e receipt waiting');
+  assert.ok(html.includes('id="copy"') && html.includes('Copy to clipboard') && m1[1].includes('navigator.clipboard')); ok('viewer page has a Copy button wired to the clipboard');
+  r = await fetch(`${B}/api/e2e/reveal/${vid}`, { method: 'OPTIONS' }); assert.equal(r.status, 204); assert.equal(r.headers.get('access-control-allow-origin'), '*'); ok('reveal preflight allows the in-chat app');
+  r = await fetch(receipt); assert.equal(r.headers.get('access-control-allow-origin'), '*'); ok('receipt readable cross-origin');
   r = await fetch(`${B}/api/e2e/reveal/${vid}`, { method: 'POST' }); j = await r.json(); assert.equal(await dec(j.result.ciphertext), 'sk-e2e-secret'); ok('e2e reveal returns ciphertext that decrypts with the fragment key');
   r = await fetch(`${B}/api/e2e/reveal/${vid}`, { method: 'POST' }); assert.equal(r.status, 404); ok('e2e second reveal 404');
   r = await fetch(receipt); assert.equal((await r.json()).result.status, 'viewed'); ok('e2e receipt viewed');
@@ -84,6 +87,7 @@ try {
   assert.equal(await dec(j.result.payload), 'db-password'); assert.equal(await dec(j.result.note), 'from carol'); ok('e2e request round trip decrypts');
   r = await fetch(`${B}/security`); html = await r.text(); assert.ok(r.status === 200 && html.includes('End-to-end') && html.includes(m1[1] ? (await import('node:crypto')).createHash('sha256').update(m1[1], 'utf8').digest('hex') : 'x')); ok('security page lists the viewer script hash');
   r = await fetch(`${B}/`); assert.equal(r.status, 200); ok('root serves the security page');
+  assert.ok(html.includes('In-chat app')); ok('security page explains the in-chat app');
   r = await fetch(`${B}/.well-known/security.txt`); const stxt = await r.text(); assert.ok(/^Contact: /m.test(stxt) && /^Expires: /m.test(stxt)); ok('security.txt has Contact and Expires');
   r = await fetch(`${B}/llms.txt`); const lt = await r.text(); assert.ok(lt.includes('## End-to-end mode') && lt.includes('## Security')); ok('llms.txt has End-to-end and Security sections');
   console.log(`all ${n} passed${process.env.REDIS_URL ? ' (Valkey store)' : ' (memory store)'}`);
