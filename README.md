@@ -27,6 +27,11 @@ Recipients and senders need only a browser: no account, no payment.
 
 The secrets core is the open-source project at https://github.com/onetimesecret/onetimesecret (MIT; licence in `licenses/`). It runs unmodified, at the version pinned in `deploy/docker-compose.yml`. This repository adds the gateway in front of it. No secrets or deployment credentials are included; `server-setup.sh` generates them on the server.
 
+## Contributors
+
+- **Starwater** ([@StarwaterHeaven](https://github.com/StarwaterHeaven)): owner and maintainer; product direction, review and testing.
+- **Wizard Kepler** (Team Kepler AI agent): build and documentation.
+
 ## Licence
 
 MIT, see LICENSE.
