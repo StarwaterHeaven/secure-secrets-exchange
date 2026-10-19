@@ -27,7 +27,7 @@ export const TOOLS = [
   {
     name: 'sse_send_secret',
     title: 'Send a secret (in-chat card)',
-    description: 'Open a card where the human types a secret to send as a one-time link. Never ask the human to type the secret in the chat. The card encrypts it and then sends you the ciphertext and a ref: buy "Secure Secrets Exchange: create" (Qatom catalog item 199, 0.10 USD-TDN) on the Qatom master MCP with that ciphertext as payload, then call sse_link_ready with the ref and the share_url_base, receipt_url and expires_at from the receipt. The card adds the key and shows the full link; you never see the secret or the key.',
+    description: 'Open a card where the human types a secret to send as a one-time link. Never ask the human to type the secret in the chat. The card encrypts it and then sends you the ciphertext and a ref: buy "Secure Secrets Exchange: create" (Qatom catalog item 199, 0.10 USD-TDN) with agent_checkout on the Qatom master MCP, with that ciphertext as payload, then call sse_link_ready with the ref and the share_url_base, receipt_url and expires_at from the receipt. The card adds the key and shows the full link; you never see the secret or the key.',
     inputSchema: { type: 'object', properties: {
       label: { type: 'string', maxLength: 80, description: 'Optional. What is being sent, shown on the card (e.g. "Staging API key for Torque").' },
       ttl_hours: { type: 'integer', minimum: 1, maximum: 168, description: 'Optional. Hours until an unopened link expires, 1 to 168. Default 24.' },
@@ -120,7 +120,7 @@ export async function handle(env, m, fetcher) {
         protocolVersion: VERSIONS.includes(p.protocolVersion) ? p.protocolVersion : VERSIONS[0],
         capabilities: { tools: { listChanged: false }, resources: { listChanged: false }, extensions: { 'io.modelcontextprotocol/ui': { mimeTypes: [UI_MIME] } } },
         serverInfo: SERVER_INFO,
-        instructions: 'Secure Secrets Exchange in-chat cards. Never ask a human to type or paste a secret, a key or a #link into the chat: open sse_send_secret or sse_open_secret and let them use the card. Paid items (create 199, request 198) are bought on the Qatom master MCP (https://mcp.m.todaq.net). Details: https://secrets.agentkepler.tech/llms.txt',
+        instructions: 'Secure Secrets Exchange in-chat cards. Never ask a human to type or paste a secret, a key or a #link into the chat: open sse_send_secret or sse_open_secret and let them use the card. Paid items (create 199, request 198) are bought on the Qatom master MCP (https://mcp.m.todaq.net) with agent_checkout, paid from the agent wallet; guest_checkout only makes a payment link for a person. Details: https://secrets.agentkepler.tech/llms.txt',
       });
     case 'ping': return ok(m.id, {});
     case 'tools/list': return ok(m.id, { tools: TOOLS });
@@ -159,7 +159,7 @@ const ABOUT = `Secure Secrets Exchange: in-chat app (MCP App)
 
 Add ${'https://sse-mcp.agentkepler.tech/mcp'} as a custom connector in a client that supports MCP Apps (Claude, ChatGPT, Hermes). No sign-in.
 Tools: sse_send_secret (send card), sse_open_secret (open card), sse_link_ready, sse_get_link, sse_check_receipt.
-The secret and its key stay inside the card; the model sees ciphertext only. Payments are on the Qatom master MCP (https://mcp.m.todaq.net), item 199 create and 198 request.
+The secret and its key stay inside the card; the model sees ciphertext only. Payments are on the Qatom master MCP (https://mcp.m.todaq.net) with agent_checkout, item 199 create and 198 request.
 Service, threat model and format: ${SSE}/security and ${SSE}/llms.txt . Source: https://github.com/StarwaterHeaven/secure-secrets-exchange (mcp-app/).
 `;
 
