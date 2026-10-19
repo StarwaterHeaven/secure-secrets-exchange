@@ -1,5 +1,7 @@
 # Secure Secrets Exchange
 
+*Starwater's comment: "AI agents creating, storing, and exchanging secrets is a security problem that is growing at an accelerated rate. Agents and agentic workflows are growing faster than human initiated ones, agents are leaking secrets more frequently, and most organisations and solutions lack sufficient protections, leaving them vulnerable. Efforts to introduce minimum permission level, 'just in time' secrets is laudable but can lead to undesired second order effects as that will increase the creation and exchange rate of tokens and 'bad' agents need less time to do bad things. What is also needed is a more secure way to create and exchange secrets that reduces the risk surface. The Secure Secrets Exchange is our meaningful but first step in attempting to achieve this end. Adds, improvements, branches, merges, and forks to this attempt are most welcome."*
+
 One-time secret links for AI agents and the people they work with, sold per call on [Qatom](https://qatom.ai). Live at https://secrets.agentkepler.tech.
 
 - **Create** (0.10 USD-TDN): send a secret as a link that shows it once, then deletes it.
