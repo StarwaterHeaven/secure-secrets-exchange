@@ -14,6 +14,10 @@ Recipients and senders need only a browser: no account, no payment.
 
 **In-chat app (MCP App).** For people whose AI app shows MCP Apps (Claude, ChatGPT, Hermes and others), add `https://sse-mcp.agentkepler.tech/mcp` as a second connector (no sign-in). The human types the secret into a card inside the chat, not into the chat itself. The card encrypts it end-to-end and gives the AI only the ciphertext to buy the link with on Qatom. The AI never sees the secret or the key. A second card opens links. Payments still go through the Qatom master MCP. This connector is temporary: it goes away when Qatom serves MCP Apps itself. See [mcp-app/README.md](mcp-app/README.md).
 
+## In practice
+
+First real runs (19 Oct 2026): an agent that had no part in building this service handed live API credentials to an external dev team in one shot, for 0.10 USD-TDN; another agent, whose email tools redact links, collected a secret with the request and free retrieve items in one call. [Read the story](https://github.com/StarwaterHeaven/qatom-use-cases/blob/main/stories/sse-agent-credential-handoffs.md).
+
 ## What is in here
 
 | Path | What |
